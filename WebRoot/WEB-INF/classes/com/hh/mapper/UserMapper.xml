@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hh.dao.UserDao">
+    <!-- User的resultMap,column是给数据库列起的别名,它对应property类的属性-->
+    <resultMap id="result_User_Map" type="com.hh.entity.User">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="joinTime" property="jointime" />
+        <result column="department_id" property="departmentId" />
+        <result column="imagePath" property="imagepath" />
+        <result column="hobbies" property="hobbies" />
+    </resultMap>
+
+    <!-- 数据库中表名为:user的列名,as前是数据库的列明,as后是列的别名用于映射成实体类中的属性,需要注意的是别名必须与resultMap中的column别名一致 -->
+    <sql id="user_Column">
+        user.id as id
+        ,user.name as name
+        ,user.password as password
+        ,user.phone as phone
+        ,user.email as email
+        ,user.joinTime as joinTime
+        ,user.department_id as department_id
+        ,user.imagePath as imagePath
+        ,user.hobbies as hobbies
+    </sql>
+
+    <!--获得类名为:User对应的数据库表的数据总行数 -->
+    <select id="getUserRowCount" resultType="java.lang.Long">
+        select count(id) from user
+    </select>
+    <!-- 获得类名为:User对应数据库中表的数据集合 -->
+    <select id="selectUser" resultMap="result_User_Map">
+        select 
+        <include refid="user_Column" /> 
+        from user
+    </select> 
+	
+	<!-- 获得类名为:User对应数据库中表的数据集合 -->
+    <select id="selectUserByUQ" parameterType="com.hh.entity.UserQuery" resultMap="result_User_Map" >
+        select 
+        <include refid="user_Column" /> 
+        from user
+        <where>
+        	<if test="uqname != null "> and name like '%${uqname}%'</if>
+        </where>
+    </select> 
+	
+	
+	
+	
+    <!-- 获得一个User对象,以参数User对象中不为空的属性作为条件进行查询-->
+    <select id="selectUserByObj" parameterType="com.hh.entity.User" resultMap="result_User_Map">
+        select 
+            <include refid="user_Column" /> 
+        from user
+        <where>
+            <if test="hobbies != null "> and user.hobbies = #{hobbies}</if>
+            <if test="imagepath != null "> and user.imagePath = #{imagepath}</if>
+            <if test="departmentId != null "> and user.department_id = #{departmentId}</if>
+            <if test="jointime != null "> and user.joinTime = #{jointime}</if>
+            <if test="email != null "> and user.email = #{email}</if>
+            <if test="phone != null "> and user.phone = #{phone}</if>
+            <if test="password != null "> and user.password = #{password}</if>
+            <if test="name != null "> and user.name = #{name}</if>
+            <if test="id != null "> and user.id = #{id}</if>
+        </where>
+    </select> 
+
+    <!-- 通过User的id获得对应数据库中表的数据对象-->
+    <select id="selectUserById" parameterType="java.lang.Integer" resultMap="result_User_Map">
+        select 
+            <include refid="user_Column" /> 
+        from user
+        where user.id = #{id}
+    </select> 
+
+    <!-- 将User插入到对应数据库的表中,包括属性值为null的数据-->
+
+    <insert id="insertUser" parameterType="com.hh.entity.User">
+        insert into user(id,name,password,phone,email,joinTime,department_id,imagePath,hobbies) 
+        values(#{id},#{name},#{password},#{phone},#{email},#{jointime},#{departmentId},#{imagepath},#{hobbies})
+    </insert>
+
+    <!-- 将User中属性值不为null的数据,插入到对应数据库的表中-->
+    <insert id="insertNonEmptyUser" parameterType="com.hh.entity.User">
+        insert into user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="name != null">name,</if>
+            <if test="password != null">password,</if>
+            <if test="phone != null">phone,</if>
+            <if test="email != null">email,</if>
+            <if test="jointime != null">joinTime,</if>
+            <if test="departmentId != null">department_id,</if>
+            <if test="imagepath != null">imagePath,</if>
+            <if test="hobbies != null">hobbies,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="name != null"> #{name},</if>
+            <if test="password != null"> #{password},</if>
+            <if test="phone != null"> #{phone},</if>
+            <if test="email != null"> #{email},</if>
+            <if test="jointime != null"> #{jointime},</if>
+            <if test="departmentId != null"> #{departmentId},</if>
+            <if test="imagepath != null"> #{imagepath},</if>
+            <if test="hobbies != null"> #{hobbies},</if>
+        </trim>
+    </insert>
+
+    <!-- 通过User的id将数据库表中对应的数据删除-->
+    <delete id="deleteUserById" parameterType="java.lang.Integer">
+        delete from user
+        where id = #{id}
+    </delete>
+
+    <!-- 通过User的id将User的数据更新到数据库中对应的表,包括值null的数据-->
+    <update id="updateUserById" parameterType="com.hh.entity.User">
+        update user set
+            name=#{name}
+            ,password=#{password}
+            ,phone=#{phone}
+            ,email=#{email}
+            ,joinTime=#{jointime}
+            ,department_id=#{departmentId}
+            ,imagePath=#{imagepath}
+            ,hobbies=#{hobbies}
+        where id=#{id}
+    </update>
+
+    <!-- 通过User的id将User中属性值不为null的数据更新到数据库对应的表中-->
+    <update id="updateNonEmptyUserById" parameterType="com.hh.entity.User">
+        update user
+        <set>
+            <if test="name != null">
+                name=#{name},
+            </if>
+            <if test="password != null">
+                password=#{password},
+            </if>
+            <if test="phone != null">
+                phone=#{phone},
+            </if>
+            <if test="email != null">
+                email=#{email},
+            </if>
+            <if test="jointime != null">
+                joinTime=#{jointime},
+            </if>
+            <if test="departmentId != null">
+                department_id=#{departmentId},
+            </if>
+            <if test="imagepath != null">
+                imagePath=#{imagepath},
+            </if>
+            <if test="hobbies != null">
+                hobbies=#{hobbies},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+</mapper>

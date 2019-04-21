@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hh.dao.LeaveDao">
+    <!-- Leave的resultMap,column是给数据库列起的别名,它对应property类的属性-->
+    <resultMap id="result_Leave_Map" type="com.hh.entity.Leave">
+        <id column="id" property="id" />
+        <result column="leave_date" property="leaveDate" />
+        <result column="leave_starttime" property="leaveStarttime" />
+        <result column="leave_endttime" property="leaveEndttime" />
+        <result column="reason" property="reason" />
+        <result column="leave_status" property="leaveStatus" />
+        
+        <association property="leaveUser" javaType="User">
+        	<id column="leave_userid" property="id" />
+       		<result column="leave_name" property="name" />
+        </association>
+        
+        <association property="examineUser" javaType="User">
+        	<id column="examine_userid" property="id" />
+       		<result column="examine_name" property="name" />
+        </association>
+    </resultMap>
+
+    <!-- 数据库中表名为:leave的列名,as前是数据库的列明,as后是列的别名用于映射成实体类中的属性,需要注意的是别名必须与resultMap中的column别名一致 -->
+    <sql id="leave_Column">
+        leave.id as id
+        ,leave.leave_date as leave_date
+        ,leave.leave_starttime as leave_starttime
+        ,leave.leave_endttime as leave_endttime
+        ,leave.reason as reason
+        ,leave.leave_status as leave_status
+        ,leave.leave_userid as leave_userid
+        ,leave.examine_userid as examine_userid
+    </sql>
+
+    <!--获得类名为:Leave对应的数据库表的数据总行数 -->
+    <select id="getLeaveRowCount" resultType="java.lang.Long">
+        select count(id) from `leave`
+    </select>
+    <!-- 获得类名为:Leave对应数据库中表的数据集合 -->
+    <select id="selectLeave" resultMap="result_Leave_Map">
+        select 
+        <include refid="leave_Column" /> 
+        from `leave`
+    </select> 
+    
+    
+    <!-- 我自己写的三表查询哦 -->
+   <select id="selectAllLeave" resultMap="result_Leave_Map">
+   		select lu.id,leave_date,leave_starttime,leave_endttime,reason,leave_status,leave_userid ,examine_userid, leave_name,uu.name as examine_name
+from   
+(SELECT l.id,leave_date,leave_starttime,leave_endttime,reason,leave_status,leave_userid ,examine_userid,u.name as leave_name 
+FROM `leave` l left JOIN user u on l.leave_userid =u.id ) as lu left join  user uu on lu.examine_userid=uu.id 
+where leave_status = 0
+ORDER BY leave_date
+   </select>
+    
+     <!-- 获得当前登陆用户对应的假期数据对应数据库中表的数据集合 -->
+    <select id="selectLeaveByUserId" resultMap="result_Leave_Map">
+        select 
+        <include refid="leave_Column" /> 
+        from `leave`
+		where leave_userid = #{id}
+		ORDER BY leave_status
+        
+    </select> 
+    
+    
+    
+
+    <!-- 获得一个Leave对象,以参数Leave对象中不为空的属性作为条件进行查询-->
+    <select id="selectLeaveByObj" parameterType="com.hh.entity.Leave" resultMap="result_Leave_Map">
+        select 
+            <include refid="leave_Column" /> 
+        from `leave`
+        <where>
+            <if test="examineUser.id != null "> and leave.examine_userid = #{examineUser.id}</if>
+            <if test="leaveUser.id != null "> and leave.leave_userid = #{leaveUser.id}</if>
+            <if test="leaveStatus != null "> and leave.leave_status = #{leaveStatus}</if>
+            <if test="reason != null "> and leave.reason = #{reason}</if>
+            <if test="leaveEndttime != null "> and leave.leave_endttime = #{leaveEndttime}</if>
+            <if test="leaveStarttime != null "> and leave.leave_starttime = #{leaveStarttime}</if>
+            <if test="leaveDate != null "> and leave.leave_date = #{leaveDate}</if>
+            <if test="id != null "> and leave.id = #{id}</if>
+        </where>
+    </select> 
+
+    <!-- 通过Leave的id获得对应数据库中表的数据对象-->
+    <select id="selectLeaveById" parameterType="java.lang.Integer" resultMap="result_Leave_Map">
+        select 
+            <include refid="leave_Column" /> 
+        from `leave`
+        where leave.id = #{id}
+    </select> 
+
+    <!-- 将Leave插入到对应数据库的表中,包括属性值为null的数据-->
+
+    <insert id="insertLeave" parameterType="com.hh.entity.Leave">
+        insert into `leave`(id,leave_date,leave_starttime,leave_endttime,reason,leave_status,leave_userid,examine_userid) 
+        values(#{id},#{leaveDate},#{leaveStarttime},#{leaveEndttime},#{reason},#{leaveStatus},#{leaveUser.id},#{examineUser.id})
+    </insert>
+
+    <!-- 将Leave中属性值不为null的数据,插入到对应数据库的表中-->
+    <insert id="insertNonEmptyLeave" parameterType="com.hh.entity.Leave">
+        insert into `leave`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="leaveDate != null">leave_date,</if>
+            <if test="leaveStarttime != null">leave_starttime,</if>
+            <if test="leaveEndttime != null">leave_endttime,</if>
+            <if test="reason != null">reason,</if>
+            <if test="leaveStatus != null">leave_status,</if>
+            <if test="leaveUser.id != null">leave_userid,</if>
+            <if test="examineUser.id != null">examine_userid,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null"> #{id},</if>
+            <if test="leaveDate != null"> #{leaveDate},</if>
+            <if test="leaveStarttime != null"> #{leaveStarttime},</if>
+            <if test="leaveEndttime != null"> #{leaveEndttime},</if>
+            <if test="reason != null"> #{reason},</if>
+            <if test="leaveStatus != null"> #{leaveStatus},</if>
+            <if test="leaveUser.id != null"> #{leaveUser.id},</if>
+            <if test="examineUser.id != null"> #{examineUser.id},</if>
+        </trim>
+    </insert>
+
+    <!-- 通过Leave的id将数据库表中对应的数据删除-->
+    <delete id="deleteLeaveById" parameterType="java.lang.Integer">
+        delete from `leave`
+        where id = #{id}
+    </delete>
+
+    <!-- 通过Leave的id将Leave的数据更新到数据库中对应的表,包括值null的数据-->
+    <update id="updateLeaveById" parameterType="com.hh.entity.Leave">
+        update `leave` set
+            leave_date=#{leaveDate}
+            ,leave_starttime=#{leaveStarttime}
+            ,leave_endttime=#{leaveEndttime}
+            ,reason=#{reason}
+            ,leave_status=#{leaveStatus}
+            ,leave_userid=#{leaveUser.id}
+            ,examine_userid=#{examineUser.id}
+        where id=#{id}
+    </update>
+
+    <!-- 通过Leave的id将Leave中属性值不为null的数据更新到数据库对应的表中-->
+    <update id="updateNonEmptyLeaveById" parameterType="com.hh.entity.Leave">
+        update `leave`
+        <set>
+            <if test="leaveDate != null">
+                leave_date=#{leaveDate},
+            </if>
+            <if test="leaveStarttime != null">
+                leave_starttime=#{leaveStarttime},
+            </if>
+            <if test="leaveEndttime != null">
+                leave_endttime=#{leaveEndttime},
+            </if>
+            <if test="reason != null">
+                reason=#{reason},
+            </if>
+            <if test="leaveStatus != null">
+                leave_status=#{leaveStatus},
+            </if>
+            <if test="leaveUser.id != null">
+                leave_userid=#{leaveUser.id},
+            </if>
+            <if test="examineUser.id != null">
+                examine_userid=#{examineUser.id},
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+</mapper>

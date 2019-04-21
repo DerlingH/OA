@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding//WebRoot/index.jsp=UTF-8
+encoding//src/com/hh/controller/AlbumController.java=UTF-8
+encoding//src/com/hh/dao/LeaveDao.java=UTF-8
+encoding//src/com/hh/dao/UserDao.java=UTF-8
+encoding//src/com/hh/dao/WorkDao.java=UTF-8
+encoding//src/com/hh/entity/Leave.java=UTF-8
+encoding//src/com/hh/service/LeaveService.java=UTF-8
+encoding//src/com/hh/service/UserService.java=UTF-8
+encoding//src/com/hh/service/WorkService.java=UTF-8
+encoding//src/com/hh/util/ValidateImageCodeUtils.java=UTF-8

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hh.dao.WorkDao">
+    <!-- Work的resultMap,column是给数据库列起的别名,它对应property类的属性-->
+    <resultMap id="result_Work_Map" type="com.hh.entity.Work">
+        <id column="id" property="id" />
+        <result column="starttime" property="starttime" />
+        <result column="endtime" property="endtime" />
+        <result column="workname" property="workname" />
+        <result column="workcontent" property="workcontent" />
+        <result column="status" property="status" />
+        
+        <association property="dept" javaType="Dept">
+        	<id column="dept_id" property="id" />
+       		<result column="dept_name" property="deptname" />
+        </association>
+        
+        <association property="user" javaType="User">
+        	<id column="user_id" property="id" />
+       		<result column="name" property="name" />
+       		<result column="password" property="password" />
+       		<result column="phone" property="phone" />
+        	<result column="email" property="email" />
+        	<result column="joinTime" property="jointime" />
+        	<result column="department_id" property="departmentId" />
+        	<result column="imagePath" property="imagepath" />
+        	<result column="hobbies" property="hobbies" />
+        </association>
+        
+        
+      
+    </resultMap>
+
+    <!-- 数据库中表名为:work的列名,as前是数据库的列明,as后是列的别名用于映射成实体类中的属性,需要注意的是别名必须与resultMap中的column别名一致 -->
+    <sql id="work_Column">
+        work.id as id
+        ,work.starttime as starttime
+        ,work.endtime as endtime
+        ,work.workname as workname
+        ,work.workcontent as workcontent
+        ,work.dept_id as dept_id
+        ,work.user_id as user_id
+        ,work.status as status
+    </sql>
+
+    <!--获得类名为:Work对应的数据库表的数据总行数 -->
+    <select id="getWorkRowCount" resultType="java.lang.Long">
+        select count(id) from work
+    </select>
+    <!-- 获得类名为:Work对应数据库中表的数据集合 -->
+    <select id="selectWork" resultMap="result_Work_Map">
+        select 
+        <include refid="work_Column" /> 
+        from work
+    </select> 
+	
+	 <!-- 获得登录用户的所有工作 -->
+    <select id="selectoneWork" resultType="java.lang.Integer" resultMap="result_Work_Map">
+        select 
+        <include refid="work_Column" /> 
+        from work
+        where user_id = #{userid}
+		ORDER BY STATUS
+    </select> 
+	
+	<!-- 获得全部工作信息 -->
+	<select id="selectAllWork"  resultMap="result_Work_Map">
+        select  wd.id ,starttime,endtime,workcontent,workname,status,dept_id,dept_name,user_id,name,password,phone,email,joinTime,department_id,imagePath,hobbies
+        from (
+		(select w.id ,w.workname ,w.starttime,w.endtime,w.workcontent,user_id,STATUS,w.dept_id,dept_name 
+		from work w left join dept d on w.dept_id = d.id)as wd left join user u on wd.user_id =u.id)
+		ORDER BY status
+    </select> 
+	
+	
+	
+    <!-- 获得一个Work对象,以参数Work对象中不为空的属性作为条件进行查询-->
+    <select id="selectWorkByObj" parameterType="com.hh.entity.Work" resultMap="result_Work_Map">
+        select 
+            <include refid="work_Column" /> 
+        from work
+        <where>
+            <if test="status != null "> and work.status = #{status}</if>
+            <if test="userId != null "> and work.user_id = #{userId}</if>
+            <if test="deptId != null "> and work.dept_id = #{deptId}</if>
+            <if test="workcontent != null "> and work.workcontent = #{workcontent}</if>
+            <if test="workname != null "> and work.workname = #{workname}</if>
+            <if test="endtime != null "> and work.endtime = #{endtime}</if>
+            <if test="starttime != null "> and work.starttime = #{starttime}</if>
+            <if test=" id != null "> and work. id = #{ id}</if>
+        </where>
+    </select> 
+
+    <!-- 通过Work的id获得对应数据库中表的数据对象-->
+    <select id="selectWorkById" parameterType="java.lang.Integer" resultMap="result_Work_Map">
+        select 
+            <include refid="work_Column" /> 
+        from work
+        where work.id = #{id}
+    </select> 
+
+    <!-- 将Work插入到对应数据库的表中,包括属性值为null的数据-->
+
+    <insert id="insertWork" parameterType="com.hh.entity.Work">
+        insert into work(id,starttime,endtime,workname,workcontent,dept_id,user_id,status) 
+        values(#{ id},#{starttime},#{endtime},#{workname},#{workcontent},#{dept.id},#{user.id},#{status})
+    </insert>
+
+    <!-- 将Work中属性值不为null的数据,插入到对应数据库的表中-->
+    <insert id="insertNonEmptyWork" parameterType="com.hh.entity.Work">
+        insert into work
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test=" id != null">id,</if>
+            <if test="starttime != null">starttime,</if>
+            <if test="endtime != null">endtime,</if>
+            <if test="workname != null">workname,</if>
+            <if test="workcontent != null">workcontent,</if>
+            <if test="dept.id != null">dept_id,</if>
+            <if test="user.id != null">user_id,</if>
+            <if test="status != null">status,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test=" id != null"> #{id},</if>
+            <if test="starttime != null"> #{starttime},</if>
+            <if test="endtime != null"> #{endtime},</if>
+            <if test="workname != null"> #{workname},</if>
+            <if test="workcontent != null"> #{workcontent},</if>
+            <if test="dept.id != null"> #{dept.id},</if>
+            <if test="user.id != null"> #{user.id},</if>
+            <if test="status != null"> #{status},</if>
+        </trim>
+    </insert>
+
+    <!-- 通过Work的id将数据库表中对应的数据删除-->
+    <delete id="deleteWorkById" parameterType="java.lang.Integer">
+        delete from work
+        where id = #{id}
+    </delete>
+
+    <!-- 通过Work的id将Work的数据更新到数据库中对应的表,包括值null的数据-->
+    <update id="updateWorkById" parameterType="com.hh.entity.Work">
+        update work set
+            starttime=#{starttime}
+            ,endtime=#{endtime}
+            ,workname=#{workname}
+            ,workcontent=#{workcontent}
+            ,dept_id=#{deptId}
+            ,user_id=#{userId}
+            ,status=#{status}
+        where id=#{id}
+    </update>
+
+    <!-- 通过Work的id将Work中属性值不为null的数据更新到数据库对应的表中-->
+    <update id="updateNonEmptyWorkById" parameterType="com.hh.entity.Work">
+        update work
+        <set>
+            <if test="starttime != null">
+                starttime=#{starttime},
+            </if>
+            <if test="endtime != null">
+                endtime=#{endtime},
+            </if>
+            <if test="workname != null">
+                workname=#{workname},
+            </if>
+            <if test="workcontent != null">
+                workcontent=#{workcontent},
+            </if>
+            <if test="deptId != null">
+                dept_id=#{deptId},
+            </if>
+            <if test="userId != null">
+                user_id=#{userId},
+            </if>
+            <if test="status != null">
+                status=#{status},
+            </if>
+        </set>
+        where  id=#{id}
+    </update>
+
+</mapper>
